@@ -50,20 +50,28 @@ imageInput.addEventListener('change', (event) => {
     upload.removeAttribute("selected")
 
     var file = imageInput.files[0];
-    var data = new FormData();
-    data.append("image", file);
+    var formData = new FormData();
+    // Zmieniono "image" na "file" dla Cloudinary
+    formData.append("file", file);
+    // Dodano upload preset
+    formData.append("upload_preset", "obywatel"); 
 
-    fetch("https://api.imgur.com/3/image/" ,{
+    // Zmieniono endpoint API
+    fetch("https://api.cloudinary.com/v1_1/dlcwqnknd/image/upload", {
         method: 'POST',
-        headers: {
-            'Authorization': 'Client-ID c27369172c61327'
-        },
-        body: data
+        // Nagłówek Authorization jest niepotrzebny dla unsigned uploads
+        body: formData
     })
-    .then(result => result.json())
+    .then(result => {
+        if (!result.ok) {
+            throw new Error('Upload failed with status ' + result.status);
+        }
+        return result.json();
+    })
     .then(response => {
+        // Zmieniono ścieżkę do linku
+        var url = response.secure_url; 
         
-        var url = response.data.link;
         upload.classList.remove("error_shown")
         upload.setAttribute("selected", url);
         upload.classList.add("upload_loaded");
@@ -71,8 +79,13 @@ imageInput.addEventListener('change', (event) => {
         upload.querySelector(".upload_uploaded").src = url;
 
     })
-
-})
+    .catch(error => {
+        console.error('Błąd podczas wysyłania do Cloudinary:', error);
+        upload.classList.remove("upload_loading");
+        upload.classList.add("error_shown");
+        alert("Wystąpił błąd podczas przesyłania zdjęcia. Spróbuj ponownie.");
+    });
+});
 
 document.querySelector(".go").addEventListener('click', () => {
 
@@ -123,7 +136,6 @@ document.querySelector(".go").addEventListener('click', () => {
     if (empty.length != 0){
         empty[0].scrollIntoView();
     }else{
-
         forwardToId(params);
     }
 
@@ -138,7 +150,9 @@ function isEmpty(value){
 
 function forwardToId(params){
 
-    location.href = "/id?" + params
+    // To jest przykładowa implementacja, która przekierowuje do URL-a
+    // z parametrami. Zmień to, jeśli ma robić coś innego.
+    location.href = "/id?" + params.toString(); 
 
 }
 
